@@ -1,0 +1,91 @@
+<html>
+    <head>
+        <title>Doing these days</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link rel="stylesheet" href="./style.css">
+    </head>
+    <body>
+        <!-- <button onclick="get_images()">Start</button> -->
+
+        <div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
+            <div class="carousel-inner">
+              <div class="carousel-item active">
+                <div id="slide"></div>
+                <div class="container">
+                    <div class="row justify-content-center">
+                        <h1 style="padding-top: 150px" class="text-primary" id="init">Loading...</h1>
+                    </div>
+                </div>
+              </div>
+            </div>
+            <a class="carousel-control-prev" onclick="change_img('left')" role="button" data-slide="prev">
+              <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+              <span class="sr-only">Previous</span>
+            </a>
+            <a class="carousel-control-next" onclick="change_img('right')" role="button" data-slide="next">
+              <span class="carousel-control-next-icon" style="border-color: 1px solid black" aria-hidden="true"></span>
+              <span class="sr-only">Next</span>
+            </a>
+          </div>
+
+          <script src="https://d3js.org/d3.v5.min.js"></script>
+          <script>
+            let id_images = [];
+            let current_image = 0;
+
+            const get_images = () => {
+                fetch("/images",{
+                    method: "GET"
+                }).then(res => {
+                    return res.json();
+                }).then(ids => id_images = ids)
+                .catch(console.log);
+            }
+
+            const show_image = (id_image) => {
+                fetch("/image/" + id_image, {
+                    method: "GET"
+                }).then(res => {
+                    return res.blob();
+                }).then(blob => {
+                    d3.select("#init")
+                        .style("display", "none");
+
+                    const img = URL.createObjectURL(blob);
+                    let slide = d3.select("#slide");
+
+                    console.log(slide.selectAll().size());
+                    if (slide.selectAll("img").size() === 0)
+                        slide = slide.append("img");
+                    else
+                        slide = slide.selectAll("img");
+
+                    slide.attr("src", img)
+                        .attr("width", "100%")
+                        .attr("height", "100%");
+                })
+                .catch(console.log);
+            }
+
+            const change_img = (dir) => {
+                if (dir === "left")
+                    current_image = Math.max(current_image - 1, 0);
+                else
+                    current_image = Math.min(current_image + 1, id_images.length - 1);
+
+                const id_image = id_images[current_image];
+                show_image(id_image);
+
+            }
+
+            const interval = setInterval(() => {
+                if (id_images.length === 0) {
+                   get_images();
+                } else {
+                    show_image(id_images[0]);
+                    clearInterval(interval);
+                }
+            }, 1000);
+          </script>
+    </body>
+</html>
